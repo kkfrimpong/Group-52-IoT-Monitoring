@@ -20,7 +20,7 @@ dist_data = []
 
 MQTT_BROKER = "YOUR_MQTT_BROKER_IP"
 MQTT_PORT = 1883
-MQTT_TOPIC = "esp32/Bit_By_Bit/data"
+MQTT_TOPIC = "esp32/group52/data"
 
 
 def on_connect(client, userdata, flags, rc):

@@ -1,4 +1,4 @@
-Group 52 IoT Monitoring System
+#Group 52 IoT Monitoring System
 
 Real-time IoT sensor monitoring project based on the EE 288 Lab 5 and Lab 6 work.
 
@@ -83,6 +83,3 @@ python app.py
 
 The dashboard refreshes every 2 seconds and retains the most recent 15 records.
 
-## Source note
-
-The repository is formatted from the Lab 5 and Lab 6 report code. A few MQTT tokens were malformed by PDF extraction, particularly the client-ID and publish-call lines, so those lines were reconstructed into valid equivalents. The credentials shown in the report were intentionally not copied into this repository.

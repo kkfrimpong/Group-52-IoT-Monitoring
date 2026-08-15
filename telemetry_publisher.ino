@@ -1,96 +1,185 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <ArduinoJson.h>
 #include "DHT.h"
+#include <ArduinoJson.h>
+
 
 #define DHTPIN 4
-#define DHTTYPE DHT11
-#define LDR_PIN 34
-#define TRIG_PIN 5
-#define ECHO_PIN 18
+#define DHTTYPE DHT22
+
+#define LDR_PIN 5
+
+#define TRIG_PIN 12
+#define ECHO_PIN 14
 
 DHT dht(DHTPIN, DHTTYPE);
 
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
-const char* mqtt_server = "YOUR_MQTT_BROKER_IP";
+const char* ssid = "Galaxy A16 0CF6";
+const char* password = "77-Genius";
+
+const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
-const char* mqtt_topic = "esp32/Bit_By_Bit/data";
+const char* mqtt_topic = "lab4/sensor";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+
 void setup_wifi() {
+
   delay(100);
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+
+  Serial.print("Connecting to WiFi");
+
+  int attempts = 0;
+
   while (WiFi.status() != WL_CONNECTED) {
+
     delay(500);
     Serial.print(".");
+
+    attempts++;
+
+    if (attempts >= 20) {
+
+      Serial.println();
+      Serial.println("WiFi connection failed.");
+
+      return;
+    }
   }
-  Serial.println("\nWiFi connected");
-  Serial.print("IP address: ");
+
+  Serial.println();
+  Serial.println("WiFi Connected!");
+
+  Serial.print("ESP32 IP Address: ");
   Serial.println(WiFi.localIP());
 }
 
-float readDistance() {
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long duration = pulseIn(ECHO_PIN, HIGH);
-  return duration * 0.0343 / 2.0;
-}
+void reconnect() {
 
-void reconnect_mqtt() {
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    String clientId = "BitByBit-ESP32-";
+
+    Serial.print("Connecting to MQTT...");
+
+    String clientId = "ESP32-Lab4-";
     clientId += String(random(0xffff), HEX);
+
     if (client.connect(clientId.c_str())) {
-      Serial.println(" MQTT Connected");
+
+      Serial.println("Connected!");
+
     } else {
-      Serial.print(" failed, rc=");
+
+      Serial.print("Failed, rc=");
       Serial.print(client.state());
-      Serial.println(" retrying in 5 seconds");
-      delay(5000);
+
+      Serial.println(" - retrying in 2 seconds");
+
+      delay(2000);
     }
   }
 }
 
+
+
+float readDistanceCM() {
+
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  if (duration == 0) {
+    return -1;
+  }
+
+  return duration * 0.0343 / 2;
+}
+
+
 void setup() {
-  Serial.begin(115200);
+
+  Serial.begin(9600);
+
+  dht.begin();
+
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(LDR_PIN, INPUT);
-  dht.begin();
+
   setup_wifi();
+
   client.setServer(mqtt_server, mqtt_port);
 }
 
+
+
 void loop() {
-  if (!client.connected()) reconnect_mqtt();
+
+  if (!client.connected()) {
+    reconnect();
+  }
+
   client.loop();
 
-  float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
-  int light = analogRead(LDR_PIN);
-  float distance = readDistance();
 
-  if (!isnan(temp) && !isnan(hum)) {
-    StaticJsonDocument<200> doc;
-    doc["temperature"] = temp;
-    doc["humidity"] = hum;
-    doc["light"] = light;
-    doc["distance"] = distance;
 
-    char jsonBuffer[200];
-    serializeJson(doc, jsonBuffer);
-    client.publish(mqtt_topic, jsonBuffer);
-    Serial.println(jsonBuffer);
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  int light = digitalRead(LDR_PIN);
+
+  float distance = readDistanceCM();
+
+
+  if (isnan(temperature) || isnan(humidity)) {
+
+    Serial.println("DHT22 read failed.");
+
+    delay(5000);
+
+    return;
   }
+
+
+
+  StaticJsonDocument<200> doc;
+
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["light"] = light;
+  doc["distance"] = distance;
+
+
+  char buffer[256];
+
+  serializeJson(doc, buffer);
+
+
+
+  bool success = client.publish(mqtt_topic, buffer);
+
+
+  if (success) {
+
+    Serial.println("Published:");
+    Serial.println(buffer);
+
+  } else {
+
+    Serial.println("MQTT publish failed.");
+
+  }
+
 
   delay(5000);
 }

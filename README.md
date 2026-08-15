@@ -9,7 +9,7 @@ The ESP32 collects temperature, humidity, light intensity and ultrasonic distanc
 ## Structure
 
 ```text
-Bit-By-Bit-IoT-Monitoring/
+Group-52-IoT-Monitoring/
 ├── README.md
 ├── .gitignore
 ├── esp32/

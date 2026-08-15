@@ -1,4 +1,4 @@
-#Group 52 IoT Monitoring System
+## Group 52 IoT Monitoring System
 
 Real-time IoT sensor monitoring project based on the EE 288 Lab 5 and Lab 6 work.
 

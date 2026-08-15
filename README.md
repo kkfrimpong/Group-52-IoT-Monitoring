@@ -17,7 +17,7 @@ Group-52-IoT-Monitoring/
 │       └── telemetry_publisher.ino
 └── dashboard/
     ├── app.py
-    └── requirements.txt
+    
 ```
 
 ## Hardware
@@ -70,14 +70,7 @@ const char* mqtt_server = "YOUR_MQTT_BROKER_IP";
 
 Upload the sketch and open Serial Monitor at 115200 baud.
 
-## Python dashboard
 
-From the `dashboard` folder:
-
-```bash
-python -m pip install -r requirements.txt
-python app.py
-```
 
 
 
